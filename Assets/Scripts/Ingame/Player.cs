@@ -9,85 +9,98 @@ namespace MiniPlanetDefense
     /// </summary>
     public class Player : MonoBehaviour
     {
-        [SerializeField] float moveSpeedOnPlanet;
-        [SerializeField] float freeMovementSpeed = 10;
-        [SerializeField] float jumpImpulse = 5;
-        [SerializeField] float maxSpeed = 10f;
-        [SerializeField] float onPlanetRadius = 0.1f;
-        [SerializeField] Color colorOnPlanet = Color.yellow;
-        [SerializeField] Color colorOffPlanet = Color.white;
-        [SerializeField] Renderer mainRenderer;
-        [SerializeField] TrailRenderer trailRenderer;
-        [SerializeField] ParticleSystem deathParticleSystem;
+        #region constants
+
+        private const int HorizontalMovementDirectionMultiplier = 1;
+
+        #endregion
         
-        [Inject] PhysicsHelper physicsHelper;
-        [Inject] Constants constants;
-        [Inject] IngameUI ingameUI;
-        [Inject] SoundManager soundManager;
+        #region serialized fields
 
-        new Rigidbody2D rigidbody;
-
-        float radius;
-
-        bool hasMovedHorizontallyLastFrame;
-        int horizontalMovementDirectionMultiplier = 1;
-
-        Vector2 freeMoveDirection;
-
-        bool isColoredOnPlanet;
-
-        int score;
-
-        bool destroyed;
-
-        Planet previousPlanet;
+        [SerializeField] private float moveSpeedOnPlanet;
+        [SerializeField] private float freeMovementSpeed = 10;
+        [SerializeField] private float jumpImpulse       = 5;
+        [SerializeField] private float maxSpeed          = 10f;
+        [SerializeField] private float onPlanetRadius    = 0.1f;
         
-        void Awake()
+        [SerializeField] private Color          colorOnPlanet  = Color.yellow;
+        [SerializeField] private Color          colorOffPlanet = Color.white;
+        [SerializeField] private Renderer       mainRenderer;
+        [SerializeField] private TrailRenderer  trailRenderer;
+        [SerializeField] private ParticleSystem deathParticleSystem;
+
+        #endregion
+
+        #region nonpublic members
+        
+        private float       m_Radius;
+        private bool        m_HasMovedHorizontallyLastFrame;
+        private Vector2     m_FreeMoveDirection;
+        private bool        m_IsColoredOnPlanet;
+        private int         m_Score;
+        private bool        m_Destroyed;
+        private Planet      m_PreviousPlanet;
+        private Rigidbody2D m_Rigidbody;
+
+        #endregion
+
+        #region inject
+
+        [Inject] private PhysicsHelper m_PhysicsHelper;
+        [Inject] private Constants     m_Constants;
+        [Inject] private IngameUI      m_IngameUI;
+        [Inject] private SoundManager  m_SoundManager;
+
+        #endregion
+
+        #region engine methods
+
+        private void Awake()
         {
-            rigidbody = GetComponent<Rigidbody2D>();
+            m_Rigidbody = GetComponent<Rigidbody2D>();
 
-            radius = transform.localScale.x / 2f;
+            m_Radius = transform.localScale.x / 2f;
 
-            isColoredOnPlanet = false;
+            m_IsColoredOnPlanet = false;
             RefreshColor();
         }
 
-        void FixedUpdate()
+        private void FixedUpdate()
         {
-            var currentPlanet = physicsHelper.GetCurrentPlanet(rigidbody.position, radius + onPlanetRadius);
+            var currentPlanet = m_PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
             if (currentPlanet == null)
             {
-                rigidbody.AddForce(physicsHelper.GetGravityAtPosition(transform.position, radius));
-                rigidbody.AddForce(freeMoveDirection * freeMovementSpeed);
+                m_Rigidbody.AddForce(m_PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
+                m_Rigidbody.AddForce(m_FreeMoveDirection * freeMovementSpeed);
             }
             else
             {
                 var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(currentPlanet).normalized;
-                rigidbody.AddForce(directionTowardsPlanetCenter * physicsHelper.GravityOnPlanet);
+                m_Rigidbody.AddForce(directionTowardsPlanetCenter * m_PhysicsHelper.GravityOnPlanet);
             }
 
             // Cap max speed
             if (maxSpeed > 0)
             {
-                var speedSqr = rigidbody.velocity.sqrMagnitude;
+                var speedSqr = m_Rigidbody.velocity.sqrMagnitude;
                 if (speedSqr > maxSpeed * maxSpeed)
                 {
-                    rigidbody.velocity *= maxSpeed / Mathf.Sqrt(speedSqr);
+                    m_Rigidbody.velocity *= maxSpeed / Mathf.Sqrt(speedSqr);
                 }
             }
         }
 
-        void Update()
+        private void Update()
         {
-            var currentPlanet = physicsHelper.GetCurrentPlanet(rigidbody.position, radius + onPlanetRadius);
+            var currentPlanet = m_PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
             //Debug.Log(currentPlanet);
 
-            if ((currentPlanet != null) && (currentPlanet != previousPlanet))
+            if ((currentPlanet != null) && (currentPlanet != m_PreviousPlanet))
             {
-                soundManager.PlaySound(Sound.TouchPlanet);
+                m_SoundManager.PlaySound(Sound.TouchPlanet);
             }
 
-            previousPlanet = currentPlanet;
+            m_PreviousPlanet = currentPlanet;
             
             if (currentPlanet == null)
             {
@@ -96,8 +109,8 @@ namespace MiniPlanetDefense
             }
             else
             {
-                freeMoveDirection.x = 0;
-                freeMoveDirection.y = 0;
+                m_FreeMoveDirection.x = 0;
+                m_FreeMoveDirection.y = 0;
                 
                 MoveAroundPlanet(currentPlanet);
 
@@ -111,40 +124,44 @@ namespace MiniPlanetDefense
                     jumpForceDirection.Normalize();
                     */
                     
-                    rigidbody.velocity = jumpForceDirection * jumpImpulse;
+                    m_Rigidbody.velocity = jumpForceDirection * jumpImpulse;
                     currentPlanet = null;
                     
-                    soundManager.PlaySound(Sound.Jump);
+                    m_SoundManager.PlaySound(Sound.Jump);
                 }
             }
 
             SetColoredOnPlanet(currentPlanet != null);
         }
 
-        void FreelyMoveInDirections()
+        #endregion
+
+        #region nonpublic methods
+
+        private void FreelyMoveInDirections()
         {
-            freeMoveDirection.x = Input.GetAxis("Horizontal");
-            freeMoveDirection.y = Input.GetAxis("Vertical");
+            m_FreeMoveDirection.x = Input.GetAxis("Horizontal");
+            m_FreeMoveDirection.y = Input.GetAxis("Vertical");
         }
         
-        void RestrictPlayerPosition()
+        private void RestrictPlayerPosition()
         {
-            var distanceFromCenterSqr = rigidbody.position.sqrMagnitude;
-            var maxDistanceFromCenter = constants.playfieldRadius - radius;
+            var distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
+            var maxDistanceFromCenter = m_Constants.playfieldRadius - m_Radius;
             if (distanceFromCenterSqr > maxDistanceFromCenter * maxDistanceFromCenter)
             {
-                rigidbody.position *= maxDistanceFromCenter / Mathf.Sqrt(distanceFromCenterSqr);
+                m_Rigidbody.position *= maxDistanceFromCenter / Mathf.Sqrt(distanceFromCenterSqr);
             }
         }
 
-        void MoveAroundPlanet(Planet planet)
+        private void MoveAroundPlanet(Planet _Planet)
         {
             var horizontal = Input.GetAxis("Horizontal");
             var isMovingHorizontallyThisFrame = horizontal != 0f;
 
             if (isMovingHorizontallyThisFrame)
             {
-                var deltaFromPlanetCenter = -CalculateDeltaToPlanetCenter(planet);
+                var deltaFromPlanetCenter = -CalculateDeltaToPlanetCenter(_Planet);
                 /*
                 if (!hasMovedHorizontallyLastFrame)
                 {
@@ -152,49 +169,49 @@ namespace MiniPlanetDefense
                 }
                 */
                 
-                var speed = moveSpeedOnPlanet / planet.Radius;
-                var moveDelta = -horizontal * horizontalMovementDirectionMultiplier * speed * Time.deltaTime;
+                var speed = moveSpeedOnPlanet / _Planet.Radius;
+                var moveDelta = -horizontal * HorizontalMovementDirectionMultiplier * speed * Time.deltaTime;
                 var rotatedDirection = Quaternion.Euler(0, 0, moveDelta) * deltaFromPlanetCenter;
-                rigidbody.position = planet.transform.position + rotatedDirection;
+                m_Rigidbody.position = _Planet.transform.position + rotatedDirection;
             }
 
-            hasMovedHorizontallyLastFrame = isMovingHorizontallyThisFrame;
+            m_HasMovedHorizontallyLastFrame = isMovingHorizontallyThisFrame;
         }
 
-        Vector3 CalculateDeltaToPlanetCenter(Planet planet)
+        private Vector3 CalculateDeltaToPlanetCenter(Component _Planet)
         {
-            return planet.transform.position - transform.position;
+            return _Planet.transform.position - transform.position;
         }
         
-        void SetColoredOnPlanet(bool value)
+        private void SetColoredOnPlanet(bool _Value)
         {
-            if (isColoredOnPlanet == value)
+            if (m_IsColoredOnPlanet == _Value)
                 return;
 
-            isColoredOnPlanet = value;
+            m_IsColoredOnPlanet = _Value;
             RefreshColor();
         }
         
-        void RefreshColor()
+        private void RefreshColor()
         {
-            var color = isColoredOnPlanet ? colorOnPlanet : colorOffPlanet;
+            var color = m_IsColoredOnPlanet ? colorOnPlanet : colorOffPlanet;
             mainRenderer.material.color = color;
             trailRenderer.startColor = color;
             trailRenderer.endColor = color;
         }
 
-        void OnCollisionEnter2D(Collision2D other)
+        private void OnCollisionEnter2D(Collision2D _Other)
         {
-            var otherGameObject = other.gameObject;
+            var otherGameObject = _Other.gameObject;
             if (otherGameObject.CompareTag(Tag.Pickup))
             {
-                var pickup = other.gameObject.GetComponent<Pickup>();
+                var pickup = _Other.gameObject.GetComponent<Pickup>();
                 pickup.Collect();
 
-                soundManager.PlaySound(Sound.Pickup);
+                m_SoundManager.PlaySound(Sound.Pickup);
                 
-                score++;
-                ingameUI.SetScore(score);
+                m_Score++;
+                m_IngameUI.SetScore(m_Score);
             }
             else if (otherGameObject.CompareTag(Tag.Enemy))
             {
@@ -202,20 +219,22 @@ namespace MiniPlanetDefense
             }
         }
 
-        void HitEnemy()
+        private void HitEnemy()
         {
-            if (destroyed)
+            if (m_Destroyed)
                 return;
 
             deathParticleSystem.transform.parent = null;
             deathParticleSystem.Play();
             
             gameObject.SetActive(false);
-            destroyed = true;
+            m_Destroyed = true;
 
-            ingameUI.ShowRestartScreen();
+            m_IngameUI.ShowRestartScreen();
             
-            soundManager.PlaySound(Sound.Death);
+            m_SoundManager.PlaySound(Sound.Death);
         }
+
+        #endregion
     }
 }

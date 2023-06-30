@@ -1,5 +1,6 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MiniPlanetDefense
@@ -10,59 +11,66 @@ namespace MiniPlanetDefense
     /// </summary>
     public class PhysicsHelper : MonoBehaviour
     {
-        [SerializeField] float gravityMultiplier = 10f;
-        [SerializeField] AnimationCurve gravityCurve;
-        [SerializeField] float gravityMaxDistance = 10f;
-        [SerializeField] bool planetGravityDependsOnRadius;
+        #region serialized fields
+
+        [SerializeField] private float gravityMultiplier  = 10f;
+        [SerializeField] private float gravityMaxDistance = 10f;
+        [SerializeField] private bool  planetGravityDependsOnRadius;
+
+        [SerializeField] private AnimationCurve gravityCurve;
+
+        #endregion
+
+        #region nonpublic members
+
+        private readonly List<Planet> m_Planets = new();
+        
+
+        #endregion
+
+        #region api
 
         public float GravityOnPlanet => gravityMultiplier;
-
-        List<Planet> planets = new List<Planet>();
-
-        public void RegisterPlanet(Planet planet)
+        
+        public void RegisterPlanet(Planet _Planet)
         {
-            planets.Add(planet);
+            m_Planets.Add(_Planet);
         }
 
-        public void DeregisterPlanet(Planet planet)
+        public void DeregisterPlanet(Planet _Planet)
         {
-            planets.Remove(planet);
+            m_Planets.Remove(_Planet);
         }
 
-        public Vector3 GetGravityAtPosition(Vector3 position, float objectRadius)
+        public Vector3 GetGravityAtPosition(Vector3 _Position, float _ObjectRadius)
         {
             var accumulatedGravity = Vector3.zero;
-            foreach (var planet in planets)
+            foreach (var planet in m_Planets)
             {
-                var deltaToPlanet = planet.Position - position;
+                var deltaToPlanet = planet.Position - _Position;
                 var distanceToPlanet = deltaToPlanet.magnitude;
-                var distanceToPlanetEdge = distanceToPlanet - planet.Radius - objectRadius;
+                var distanceToPlanetEdge = distanceToPlanet - planet.Radius - _ObjectRadius;
                 var percentDistanceToPlanetEdge = Mathf.Clamp01(distanceToPlanetEdge / gravityMaxDistance);
-                if (percentDistanceToPlanetEdge == 1)
+                if (Math.Abs(percentDistanceToPlanetEdge - 1f) < float.Epsilon)
                     continue;
-
                 var gravityFromPlanet = gravityCurve.Evaluate(percentDistanceToPlanetEdge) * gravityMultiplier;
-
                 if (planetGravityDependsOnRadius)
                     gravityFromPlanet *= planet.Radius;
-                
                 accumulatedGravity += deltaToPlanet.normalized * gravityFromPlanet;
             }
             return accumulatedGravity;
         }
 
-        public Planet GetCurrentPlanet(Vector3 position, float searchRadius)
+        public Planet GetCurrentPlanet(Vector3 _Position, float _SearchRadius)
         {
-            foreach (var planet in planets)
-            {
-                var deltaToPlanet = planet.Position - position;
-                var distanceToPlanet = deltaToPlanet.magnitude;
-                var distanceToPlanetEdge = distanceToPlanet - planet.Radius - searchRadius;
-                if (distanceToPlanetEdge <= 0f)
-                    return planet;
-            }
-
-            return null;
+            return (from planet in m_Planets
+                let deltaToPlanet = planet.Position - _Position
+                let distanceToPlanet = deltaToPlanet.magnitude
+                let distanceToPlanetEdge = distanceToPlanet - planet.Radius - _SearchRadius
+                where distanceToPlanetEdge <= 0f
+                select planet).FirstOrDefault();
         }
+
+        #endregion
     }
 }
