@@ -42,18 +42,18 @@ namespace MiniPlanetDefense
             m_Planets.Remove(_Planet);
         }
 
-        public Vector3 GetGravityAtPosition(Vector3 _Position, float _ObjectRadius)
+        public Vector3 GetGravityAtPosition(Vector2 _Position, float _ObjectRadius)
         {
-            var accumulatedGravity = Vector3.zero;
+            var accumulatedGravity = Vector2.zero;
             foreach (var planet in m_Planets)
             {
-                var deltaToPlanet = planet.Position - _Position;
-                var distanceToPlanet = deltaToPlanet.magnitude;
-                var distanceToPlanetEdge = distanceToPlanet - planet.Radius - _ObjectRadius;
-                var percentDistanceToPlanetEdge = Mathf.Clamp01(distanceToPlanetEdge / gravityMaxDistance);
+                Vector2 deltaToPlanet = planet.Position - _Position;
+                float distanceToPlanet = deltaToPlanet.magnitude;
+                float distanceToPlanetEdge = distanceToPlanet - planet.Radius - _ObjectRadius;
+                float percentDistanceToPlanetEdge = Mathf.Clamp01(distanceToPlanetEdge / gravityMaxDistance);
                 if (Math.Abs(percentDistanceToPlanetEdge - 1f) < float.Epsilon)
                     continue;
-                var gravityFromPlanet = gravityCurve.Evaluate(percentDistanceToPlanetEdge) * gravityMultiplier;
+                float gravityFromPlanet = gravityCurve.Evaluate(percentDistanceToPlanetEdge) * gravityMultiplier;
                 if (planetGravityDependsOnRadius)
                     gravityFromPlanet *= planet.Radius;
                 accumulatedGravity += deltaToPlanet.normalized * gravityFromPlanet;
@@ -61,7 +61,7 @@ namespace MiniPlanetDefense
             return accumulatedGravity;
         }
 
-        public Planet GetCurrentPlanet(Vector3 _Position, float _SearchRadius)
+        public Planet GetCurrentPlanet(Vector2 _Position, float _SearchRadius)
         {
             return (from planet in m_Planets
                 let deltaToPlanet = planet.Position - _Position

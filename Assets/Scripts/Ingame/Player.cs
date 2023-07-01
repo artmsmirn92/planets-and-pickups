@@ -1,3 +1,4 @@
+using mazing.common.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 using Zenject;
@@ -46,28 +47,16 @@ namespace MiniPlanetDefense
         private Planet  m_CurrentPlanet;
         private bool    m_MustJump;
         private Vector2 m_MoveDir;
+        private bool    m_DoMoveAroundPlanet;
 
         #endregion
 
         #region inject
 
-        private PhysicsHelper PhysicsHelper { get; set; }
-        private Constants     Constants     { get; set; }
-        private IngameUI      InGameUI      { get; set; }
-        private SoundManager  SoundManager  { get; set; }
-
-        [Inject]
-        private void Inject(
-            PhysicsHelper _PhysicsHelper,
-            Constants     _Constants,
-            IngameUI      _InGameUI,
-            SoundManager  _SoundManager)
-        {
-            PhysicsHelper = _PhysicsHelper;
-            Constants     = _Constants;
-            InGameUI      = _InGameUI;
-            SoundManager  = _SoundManager;
-        }
+        [Inject] private PhysicsHelper PhysicsHelper { get; }
+        [Inject] private Constants     Constants     { get; }
+        [Inject] private IngameUI      InGameUI      { get; }
+        [Inject] private SoundManager  SoundManager  { get; }
 
         #endregion
 
@@ -101,40 +90,40 @@ namespace MiniPlanetDefense
 
         private void FixedUpdate()
         {
-            var currentPlanet = PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
-            if (currentPlanet == null)
+            m_CurrentPlanet = PhysicsHelper.GetCurrentPlanet(
+                m_Rigidbody.position, 
+                m_Radius + onPlanetRadius);
+            if (m_CurrentPlanet == null)
             {
+                ProceedPlayerInSpaceState();
                 m_Rigidbody.AddForce(PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
                 m_Rigidbody.AddForce(m_FreeMoveDirection * freeMovementSpeed);
             }
             else
             {
-                var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(currentPlanet).normalized;
+                ProceedPlayerOnPlanetState();
+                var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized;
                 m_Rigidbody.AddForce(directionTowardsPlanetCenter * PhysicsHelper.GravityOnPlanet);
             }
 
             // Cap max speed
             if (maxSpeed > 0)
             {
-                var speedSqr = m_Rigidbody.velocity.sqrMagnitude;
+                float speedSqr = m_Rigidbody.velocity.sqrMagnitude;
                 if (speedSqr > maxSpeed * maxSpeed)
-                {
                     m_Rigidbody.velocity *= maxSpeed / Mathf.Sqrt(speedSqr);
-                }
             }
+            SetColoredOnPlanet(m_CurrentPlanet != null);
+            m_PreviousPlanet = m_CurrentPlanet;
         }
 
         private void Update()
         {
-            m_CurrentPlanet = PhysicsHelper.GetCurrentPlanet(
-                m_Rigidbody.position, 
-                m_Radius + onPlanetRadius);
             if (m_CurrentPlanet == null)
                 ProceedPlayerInSpaceState();
             else
                 ProceedPlayerOnPlanetState();
             SetColoredOnPlanet(m_CurrentPlanet != null);
-            m_PreviousPlanet = m_CurrentPlanet;
         }
 
         #endregion
@@ -160,13 +149,8 @@ namespace MiniPlanetDefense
 
         private void Jump()
         {
+            Dbg.Log("jump!!!");
             var jumpForceDirection = -CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized;
-            /*
-            var direction = Input.GetAxis("Horizontal");
-            jumpForceDirection.x += jumpForceDirection.y * direction;
-            jumpForceDirection.y -= jumpForceDirection.x * direction;
-            jumpForceDirection.Normalize();
-            */
             m_Rigidbody.velocity = jumpForceDirection * jumpImpulse;
             m_CurrentPlanet = null;
             SoundManager.PlaySound(Sound.Jump);
@@ -179,8 +163,8 @@ namespace MiniPlanetDefense
         
         private void RestrictPlayerPosition()
         {
-            var distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
-            var maxDistanceFromCenter = Constants.playfieldRadius - m_Radius;
+            float distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
+            float maxDistanceFromCenter = Constants.playfieldRadius - m_Radius;
             if (distanceFromCenterSqr > maxDistanceFromCenter * maxDistanceFromCenter)
             {
                 m_Rigidbody.position *= maxDistanceFromCenter / Mathf.Sqrt(distanceFromCenterSqr);
@@ -189,24 +173,17 @@ namespace MiniPlanetDefense
 
         private void MoveAroundPlanet(Planet _Planet)
         {
-            var isMovingHorizontallyThisFrame = m_MoveDir.x != 0f;
-            if (isMovingHorizontallyThisFrame)
+            m_DoMoveAroundPlanet = m_MoveDir.x != 0f;
+            if (m_DoMoveAroundPlanet)
             {
                 var deltaFromPlanetCenter = -CalculateDeltaToPlanetCenter(_Planet);
-                /*
-                if (!hasMovedHorizontallyLastFrame)
-                {
-                    horizontalMovementDirectionMultiplier = (deltaFromPlanetCenter.y < 0) ? -1 : 1;
-                }
-                */
-                
-                var speed = moveSpeedOnPlanet / _Planet.Radius;
-                var moveDelta = -m_MoveDir.x * HorizontalMovementDirectionMultiplier * speed * Time.deltaTime;
+                float speed = moveSpeedOnPlanet / _Planet.Radius;
+                float moveDelta = -m_MoveDir.x * HorizontalMovementDirectionMultiplier * speed * Time.fixedDeltaTime;
                 var rotatedDirection = Quaternion.Euler(0, 0, moveDelta) * deltaFromPlanetCenter;
                 m_Rigidbody.position = _Planet.transform.position + rotatedDirection;
             }
 
-            m_HasMovedHorizontallyLastFrame = isMovingHorizontallyThisFrame;
+            m_HasMovedHorizontallyLastFrame = m_DoMoveAroundPlanet;
         }
 
         private Vector3 CalculateDeltaToPlanetCenter(Component _Planet)

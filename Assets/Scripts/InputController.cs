@@ -17,6 +17,7 @@ public class InputController : MonoBehaviour
     [Inject] private Player            Player            { get; }
     [Inject] private PressKeyToStart   PressKeyToStart   { get; }
     [Inject] private PressKeyToRestart PressKeyToRestart { get; }
+    [Inject] private LevelsController  LevelsController  { get; }
     
     #endregion
     
@@ -27,6 +28,7 @@ public class InputController : MonoBehaviour
         Player.Death              += OnPlayerDeath;
         PressKeyToStart.Start     += OnLevelStart;
         PressKeyToRestart.Restart += OnLevelRestart;
+        LevelsController.CurrentLevel = 1;
     }
     
     private void Update()

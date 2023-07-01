@@ -23,7 +23,8 @@ namespace MiniPlanetDefense
         #region api
 
         public float   Radius   { get; private set; }
-        public Vector3 Position { get; private set; }
+        public Vector2 Position { get; private set; }
+        public Vector2 Speed    { get; private set; }
 
         #endregion
 

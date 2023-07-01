@@ -12,6 +12,7 @@ namespace MiniPlanetDefense
         [SerializeField] private InputController   inputController;
         [SerializeField] private PressKeyToStart   pressKeyToStart;
         [SerializeField] private PressKeyToRestart pressKeyToRestart;
+        [SerializeField] private LevelsController  levelsController;
         
         public override void InstallBindings()
         {
@@ -19,6 +20,7 @@ namespace MiniPlanetDefense
             Container.Bind<InputController>()  .FromInstance(inputController)  .AsSingle();
             Container.Bind<PressKeyToStart>()  .FromInstance(pressKeyToStart)  .AsSingle();
             Container.Bind<PressKeyToRestart>().FromInstance(pressKeyToRestart).AsSingle();
+            Container.Bind<LevelsController>() .FromInstance(levelsController) .AsSingle();
         }
     }
 }

@@ -8,8 +8,8 @@ using Zenject;
 [Serializable]
 public class LevelData
 {
-    public float      playfieldRadius;
     public GameObject levelGo;
+    public Transform  playfieldTr;
 }
     
 [Serializable]
@@ -26,7 +26,7 @@ public class LevelsController : MonoBehaviour
 
     #region nonpublic members
 
-    private int m_CurrentLevel = -1;
+    private int m_CurrentLevelIdx = -1;
 
     #endregion
     
@@ -40,10 +40,10 @@ public class LevelsController : MonoBehaviour
 
     public int CurrentLevel
     {
-        get => m_CurrentLevel;
+        get => m_CurrentLevelIdx;
         set
         {
-            m_CurrentLevel = value;
+            m_CurrentLevelIdx = value;
             ActivateCurrentLevel();
         }
     }
@@ -56,9 +56,14 @@ public class LevelsController : MonoBehaviour
     {
         foreach (var levelData in levelsData)
             levelData.levelGo.SetActive(false);
-        var currentLevelData = levelsData[m_CurrentLevel];
+        var currentLevelData = GetCurrentLevelData();
         currentLevelData.levelGo.SetActive(true);
-        m_Constants.playfieldRadius = currentLevelData.playfieldRadius;
+        m_Constants.playfieldRadius = currentLevelData.playfieldTr.localScale.x * .5f;
+    }
+
+    private LevelData GetCurrentLevelData()
+    {
+        return levelsData[m_CurrentLevelIdx];
     }
 
     #endregion
