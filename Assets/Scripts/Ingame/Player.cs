@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using Zenject;
 
 namespace MiniPlanetDefense
@@ -42,14 +43,47 @@ namespace MiniPlanetDefense
         private Planet      m_PreviousPlanet;
         private Rigidbody2D m_Rigidbody;
 
+        private Planet  m_CurrentPlanet;
+        private bool    m_MustJump;
+        private Vector2 m_MoveDir;
+
         #endregion
 
         #region inject
 
-        [Inject] private PhysicsHelper m_PhysicsHelper;
-        [Inject] private Constants     m_Constants;
-        [Inject] private IngameUI      m_IngameUI;
-        [Inject] private SoundManager  m_SoundManager;
+        private PhysicsHelper PhysicsHelper { get; set; }
+        private Constants     Constants     { get; set; }
+        private IngameUI      InGameUI      { get; set; }
+        private SoundManager  SoundManager  { get; set; }
+
+        [Inject]
+        private void Inject(
+            PhysicsHelper _PhysicsHelper,
+            Constants     _Constants,
+            IngameUI      _InGameUI,
+            SoundManager  _SoundManager)
+        {
+            PhysicsHelper = _PhysicsHelper;
+            Constants     = _Constants;
+            InGameUI      = _InGameUI;
+            SoundManager  = _SoundManager;
+        }
+
+        #endregion
+
+        #region api
+
+        public event UnityAction Death;
+        
+        public void InvokeJump()
+        {
+            m_MustJump = true;
+        }
+
+        public void SetMoveDir(Vector2 _Value)
+        {
+            m_MoveDir = _Value;
+        }
 
         #endregion
 
@@ -67,16 +101,16 @@ namespace MiniPlanetDefense
 
         private void FixedUpdate()
         {
-            var currentPlanet = m_PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
+            var currentPlanet = PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
             if (currentPlanet == null)
             {
-                m_Rigidbody.AddForce(m_PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
+                m_Rigidbody.AddForce(PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
                 m_Rigidbody.AddForce(m_FreeMoveDirection * freeMovementSpeed);
             }
             else
             {
                 var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(currentPlanet).normalized;
-                m_Rigidbody.AddForce(directionTowardsPlanetCenter * m_PhysicsHelper.GravityOnPlanet);
+                m_Rigidbody.AddForce(directionTowardsPlanetCenter * PhysicsHelper.GravityOnPlanet);
             }
 
             // Cap max speed
@@ -92,62 +126,61 @@ namespace MiniPlanetDefense
 
         private void Update()
         {
-            var currentPlanet = m_PhysicsHelper.GetCurrentPlanet(m_Rigidbody.position, m_Radius + onPlanetRadius);
-            //Debug.Log(currentPlanet);
-
-            if ((currentPlanet != null) && (currentPlanet != m_PreviousPlanet))
-            {
-                m_SoundManager.PlaySound(Sound.TouchPlanet);
-            }
-
-            m_PreviousPlanet = currentPlanet;
-            
-            if (currentPlanet == null)
-            {
-                FreelyMoveInDirections();
-                RestrictPlayerPosition();
-            }
+            m_CurrentPlanet = PhysicsHelper.GetCurrentPlanet(
+                m_Rigidbody.position, 
+                m_Radius + onPlanetRadius);
+            if (m_CurrentPlanet == null)
+                ProceedPlayerInSpaceState();
             else
-            {
-                m_FreeMoveDirection.x = 0;
-                m_FreeMoveDirection.y = 0;
-                
-                MoveAroundPlanet(currentPlanet);
-
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    var jumpForceDirection = -CalculateDeltaToPlanetCenter(currentPlanet).normalized;
-                    /*
-                    var direction = Input.GetAxis("Horizontal");
-                    jumpForceDirection.x += jumpForceDirection.y * direction;
-                    jumpForceDirection.y -= jumpForceDirection.x * direction;
-                    jumpForceDirection.Normalize();
-                    */
-                    
-                    m_Rigidbody.velocity = jumpForceDirection * jumpImpulse;
-                    currentPlanet = null;
-                    
-                    m_SoundManager.PlaySound(Sound.Jump);
-                }
-            }
-
-            SetColoredOnPlanet(currentPlanet != null);
+                ProceedPlayerOnPlanetState();
+            SetColoredOnPlanet(m_CurrentPlanet != null);
+            m_PreviousPlanet = m_CurrentPlanet;
         }
 
         #endregion
 
         #region nonpublic methods
 
+        private void ProceedPlayerInSpaceState()
+        {
+            FreelyMoveInDirections();
+            RestrictPlayerPosition();
+        }
+        
+        private void ProceedPlayerOnPlanetState()
+        {
+            if (m_CurrentPlanet != m_PreviousPlanet)
+                SoundManager.PlaySound(Sound.TouchPlanet);
+            m_FreeMoveDirection = Vector2.zero;
+            MoveAroundPlanet(m_CurrentPlanet);
+            if (!m_MustJump) return;
+            Jump();
+            m_MustJump = false;
+        }
+
+        private void Jump()
+        {
+            var jumpForceDirection = -CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized;
+            /*
+            var direction = Input.GetAxis("Horizontal");
+            jumpForceDirection.x += jumpForceDirection.y * direction;
+            jumpForceDirection.y -= jumpForceDirection.x * direction;
+            jumpForceDirection.Normalize();
+            */
+            m_Rigidbody.velocity = jumpForceDirection * jumpImpulse;
+            m_CurrentPlanet = null;
+            SoundManager.PlaySound(Sound.Jump);
+        }
+        
         private void FreelyMoveInDirections()
         {
-            m_FreeMoveDirection.x = Input.GetAxis("Horizontal");
-            m_FreeMoveDirection.y = Input.GetAxis("Vertical");
+            m_FreeMoveDirection = m_MoveDir;
         }
         
         private void RestrictPlayerPosition()
         {
             var distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
-            var maxDistanceFromCenter = m_Constants.playfieldRadius - m_Radius;
+            var maxDistanceFromCenter = Constants.playfieldRadius - m_Radius;
             if (distanceFromCenterSqr > maxDistanceFromCenter * maxDistanceFromCenter)
             {
                 m_Rigidbody.position *= maxDistanceFromCenter / Mathf.Sqrt(distanceFromCenterSqr);
@@ -156,9 +189,7 @@ namespace MiniPlanetDefense
 
         private void MoveAroundPlanet(Planet _Planet)
         {
-            var horizontal = Input.GetAxis("Horizontal");
-            var isMovingHorizontallyThisFrame = horizontal != 0f;
-
+            var isMovingHorizontallyThisFrame = m_MoveDir.x != 0f;
             if (isMovingHorizontallyThisFrame)
             {
                 var deltaFromPlanetCenter = -CalculateDeltaToPlanetCenter(_Planet);
@@ -170,7 +201,7 @@ namespace MiniPlanetDefense
                 */
                 
                 var speed = moveSpeedOnPlanet / _Planet.Radius;
-                var moveDelta = -horizontal * HorizontalMovementDirectionMultiplier * speed * Time.deltaTime;
+                var moveDelta = -m_MoveDir.x * HorizontalMovementDirectionMultiplier * speed * Time.deltaTime;
                 var rotatedDirection = Quaternion.Euler(0, 0, moveDelta) * deltaFromPlanetCenter;
                 m_Rigidbody.position = _Planet.transform.position + rotatedDirection;
             }
@@ -196,8 +227,8 @@ namespace MiniPlanetDefense
         {
             var color = m_IsColoredOnPlanet ? colorOnPlanet : colorOffPlanet;
             mainRenderer.material.color = color;
-            trailRenderer.startColor = color;
-            trailRenderer.endColor = color;
+            trailRenderer.startColor    = color;
+            trailRenderer.endColor      = color;
         }
 
         private void OnCollisionEnter2D(Collision2D _Other)
@@ -208,10 +239,10 @@ namespace MiniPlanetDefense
                 var pickup = _Other.gameObject.GetComponent<Pickup>();
                 pickup.Collect();
 
-                m_SoundManager.PlaySound(Sound.Pickup);
+                SoundManager.PlaySound(Sound.Pickup);
                 
                 m_Score++;
-                m_IngameUI.SetScore(m_Score);
+                InGameUI.SetScore(m_Score);
             }
             else if (otherGameObject.CompareTag(Tag.Enemy))
             {
@@ -223,16 +254,16 @@ namespace MiniPlanetDefense
         {
             if (m_Destroyed)
                 return;
-
+            Death?.Invoke();
             deathParticleSystem.transform.parent = null;
             deathParticleSystem.Play();
             
             gameObject.SetActive(false);
             m_Destroyed = true;
 
-            m_IngameUI.ShowRestartScreen();
+            InGameUI.ShowRestartScreen();
             
-            m_SoundManager.PlaySound(Sound.Death);
+            SoundManager.PlaySound(Sound.Death);
         }
 
         #endregion

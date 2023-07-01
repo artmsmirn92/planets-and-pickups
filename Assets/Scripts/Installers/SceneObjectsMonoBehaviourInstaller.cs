@@ -8,15 +8,17 @@ namespace MiniPlanetDefense
     /// </summary>
     public class SceneObjectsMonoBehaviourInstaller : MonoInstaller
     {
-        [SerializeField] private MonoBehaviour[] monoBehaviours;
+        [SerializeField] private Player            player;
+        [SerializeField] private InputController   inputController;
+        [SerializeField] private PressKeyToStart   pressKeyToStart;
+        [SerializeField] private PressKeyToRestart pressKeyToRestart;
         
         public override void InstallBindings()
         {
-            foreach (var monoBehaviour in monoBehaviours)
-            {
-                var t = monoBehaviour.GetType();
-                Container.Bind(t).FromInstance(monoBehaviour).AsSingle();
-            }
+            Container.Bind<Player>()           .FromInstance(player)           .AsSingle();
+            Container.Bind<InputController>()  .FromInstance(inputController)  .AsSingle();
+            Container.Bind<PressKeyToStart>()  .FromInstance(pressKeyToStart)  .AsSingle();
+            Container.Bind<PressKeyToRestart>().FromInstance(pressKeyToRestart).AsSingle();
         }
     }
 }
