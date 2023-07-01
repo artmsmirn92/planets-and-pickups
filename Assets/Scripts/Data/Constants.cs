@@ -11,5 +11,6 @@ namespace MiniPlanetDefense
     public class Constants : ScriptableObject
     {
         public float playfieldRadius;
+        public bool  inGame;
     }
 }
