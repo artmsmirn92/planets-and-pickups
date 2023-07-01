@@ -1,4 +1,6 @@
+using Lean.Common;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace MiniPlanetDefense
@@ -8,15 +10,17 @@ namespace MiniPlanetDefense
     /// </summary>
     public class PressKeyToRestart : MonoBehaviour
     {
-        [SerializeField] KeyCode key = KeyCode.Space;
+        [SerializeField] private KeyCode key = KeyCode.Space;
 
-        void Update()
+        private void Update()
         {
-            if (Input.GetKeyDown(key))
-            {
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            }
+            if (!LeanInput.GetDown(key)) 
+                return;
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            Restart?.Invoke();
         }
+
+        public event UnityAction Restart;
     }
 }

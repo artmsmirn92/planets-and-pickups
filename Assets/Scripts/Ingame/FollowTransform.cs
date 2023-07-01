@@ -1,3 +1,4 @@
+using mazing.common.Runtime.Extensions;
 using UnityEngine;
 
 namespace MiniPlanetDefense
@@ -7,23 +8,30 @@ namespace MiniPlanetDefense
     /// </summary>
     public class FollowTransform : MonoBehaviour
     {
-        [SerializeField] Transform target;
-        [SerializeField] float followMultiplier = 0.9f;
+        #region serialized fields
 
-        void Awake()
+        [SerializeField] private Transform target;
+        [SerializeField] private float     followMultiplier = 0.9f;
+
+        #endregion
+
+        #region engine methods
+
+        private void Awake()
         {
             var targetPosition = target.position;
             targetPosition.z = transform.position.z;
-            transform.position = targetPosition;
+            transform.SetPosXY(targetPosition);
         }
         
-        void FixedUpdate()
+        private void FixedUpdate()
         {
             var position = transform.position;
             var targetPosition = target.position;
             targetPosition.z = position.z;
-
             transform.position = Vector3.Lerp(position, targetPosition, followMultiplier);
         }
+
+        #endregion
     }
 }

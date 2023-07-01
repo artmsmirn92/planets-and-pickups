@@ -1,4 +1,6 @@
+using Lean.Common;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace MiniPlanetDefense
@@ -8,24 +10,33 @@ namespace MiniPlanetDefense
     /// </summary>
     public class PressKeyToStart : MonoBehaviour
     {
-        [SerializeField] KeyCode key = KeyCode.Space;
+        #region serialized fields
 
-        void OnEnable()
-        {
-            Time.timeScale = 0f;
-        }
+        [SerializeField] private KeyCode key = KeyCode.Space;
+
+        #endregion
         
-        void OnDisable()
-        {
-            Time.timeScale = 1f;
-        }
+        #region api
         
-        void Update()
+        public event UnityAction Start;
+        
+        #endregion
+
+
+        #region engine methods
+
+        private void OnEnable() => Time.timeScale = 0f;
+
+        private void OnDisable() => Time.timeScale = 1f;
+
+        private void Update()
         {
-            if (Input.GetKeyDown(key))
-            {
-                gameObject.SetActive(false);
-            }
+            if (!LeanInput.GetDown(key)) 
+                return;
+            gameObject.SetActive(false);
+            Start?.Invoke();
         }
+
+        #endregion
     }
 }
