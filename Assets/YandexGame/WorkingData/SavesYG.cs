@@ -2,7 +2,7 @@
 namespace YG
 {
     [System.Serializable]
-    public class SavesYG
+    public partial class SavesYG
     {
         // "Технические сохранения" для работы плагина (Не удалять)
         public int idSave;

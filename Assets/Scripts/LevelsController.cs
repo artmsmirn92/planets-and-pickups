@@ -56,6 +56,8 @@ public class LevelsController : MonoBehaviour
 
     private void ActivateCurrentLevel()
     {
+        if (m_CurrentLevelIdx == -2)
+            return;
         infiniteLevelData.levelGo.SetActive(false);
         foreach (var levelData in levelsData)
             levelData.levelGo.SetActive(false);

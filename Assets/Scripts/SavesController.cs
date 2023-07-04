@@ -1,24 +1,42 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using YG;
 
 public class SavesController : MonoBehaviour
 {
-    public int GetCurrentLevel()
+    public int GetLevelsPassed()
     {
-        throw new System.NotImplementedException();
+        return YandexGame.savesData.levelsPassed;
     }
 
-    public void SetCurrentLevel(int _Level)
+    public void SetLevelPassed(int _Level)
     {
-        throw new System.NotImplementedException();
+        YandexGame.savesData.levelsPassed = Math.Max(
+            _Level,
+            YandexGame.savesData.levelsPassed);
     }
 
-    public int GetInfiniteLevelRecord()
+    public int GetInfiniteLevelScore()
     {
-        throw new System.NotImplementedException();
+        return YandexGame.savesData.infiniteLevelRecord;
     }
 
-    public void SetInfiniteLevelRecord()
+    public void SetInfiniteLevelScore(int _Record)
     {
-        throw new System.NotImplementedException();
+        YandexGame.savesData.infiniteLevelRecord = Math.Max(
+            _Record,
+            YandexGame.savesData.infiniteLevelRecord);
+    }
+
+    public int GetLevelScore(int _Level)
+    {
+        return YandexGame.savesData.levelSaveData[_Level].score;
+    }
+    
+    public void SetLevelScore(int _Level, int _Score)
+    {
+        YandexGame.savesData.levelSaveData[_Level].score = Math.Max(
+            _Score,
+            YandexGame.savesData.levelSaveData[_Level].score);
     }
 }

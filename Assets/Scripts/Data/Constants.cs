@@ -12,5 +12,7 @@ namespace MiniPlanetDefense
     {
         public float playfieldRadius;
         public bool  inGame;
+        public int   currentLevel;
+        public int   currentLevelScore;
     }
 }

@@ -47,7 +47,7 @@ namespace MiniPlanetDefense
             var accumulatedGravity = Vector2.zero;
             foreach (var planet in m_Planets)
             {
-                Vector2 deltaToPlanet = planet.Position - _Position;
+                var deltaToPlanet = planet.Position - _Position;
                 float distanceToPlanet = deltaToPlanet.magnitude;
                 float distanceToPlanetEdge = distanceToPlanet - planet.Radius - _ObjectRadius;
                 float percentDistanceToPlanetEdge = Mathf.Clamp01(distanceToPlanetEdge / gravityMaxDistance);
@@ -55,7 +55,7 @@ namespace MiniPlanetDefense
                     continue;
                 float gravityFromPlanet = gravityCurve.Evaluate(percentDistanceToPlanetEdge) * gravityMultiplier;
                 if (planetGravityDependsOnRadius)
-                    gravityFromPlanet *= planet.Radius;
+                    gravityFromPlanet *= 0.1f * planet.Radius;
                 accumulatedGravity += deltaToPlanet.normalized * gravityFromPlanet;
             }
             return accumulatedGravity;

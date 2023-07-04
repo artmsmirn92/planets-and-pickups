@@ -1,6 +1,7 @@
 using mazing.common.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
+using YG;
 using Zenject;
 
 namespace MiniPlanetDefense
@@ -53,10 +54,11 @@ namespace MiniPlanetDefense
 
         #region inject
 
-        [Inject] private PhysicsHelper PhysicsHelper { get; }
-        [Inject] private Constants     Constants     { get; }
-        [Inject] private IngameUI      InGameUI      { get; }
-        [Inject] private SoundManager  SoundManager  { get; }
+        [Inject] private PhysicsHelper   PhysicsHelper   { get; }
+        [Inject] private Constants       Constants       { get; }
+        [Inject] private IngameUI        InGameUI        { get; }
+        [Inject] private SoundManager    SoundManager    { get; }
+        [Inject] private ScoreController ScoreController { get; }
 
         #endregion
 
@@ -95,15 +97,16 @@ namespace MiniPlanetDefense
                 m_Radius + onPlanetRadius);
             if (m_CurrentPlanet == null)
             {
-                ProceedPlayerInSpaceState();
                 m_Rigidbody.AddForce(PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
                 m_Rigidbody.AddForce(m_FreeMoveDirection * freeMovementSpeed);
+                ProceedPlayerInSpaceState();
             }
             else
             {
-                ProceedPlayerOnPlanetState();
-                var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized;
+                var cp = m_CurrentPlanet;
+                var directionTowardsPlanetCenter = CalculateDeltaToPlanetCenter(cp).normalized;
                 m_Rigidbody.AddForce(directionTowardsPlanetCenter * PhysicsHelper.GravityOnPlanet);
+                ProceedPlayerOnPlanetState();
             }
 
             // Cap max speed
@@ -117,14 +120,14 @@ namespace MiniPlanetDefense
             m_PreviousPlanet = m_CurrentPlanet;
         }
 
-        private void Update()
-        {
-            if (m_CurrentPlanet == null)
-                ProceedPlayerInSpaceState();
-            else
-                ProceedPlayerOnPlanetState();
-            SetColoredOnPlanet(m_CurrentPlanet != null);
-        }
+        // private void Update()
+        // {
+        //     if (m_CurrentPlanet == null)
+        //         ProceedPlayerInSpaceState();
+        //     else
+        //         ProceedPlayerOnPlanetState();
+        //     SetColoredOnPlanet(m_CurrentPlanet != null);
+        // }
 
         #endregion
 
@@ -219,7 +222,7 @@ namespace MiniPlanetDefense
                 SoundManager.PlaySound(Sound.Pickup);
                 
                 m_Score++;
-                InGameUI.SetScore(m_Score);
+                ScoreController.SetScore(-1, m_Score);
             }
             else if (otherGameObject.CompareTag(Tag.Enemy))
             {

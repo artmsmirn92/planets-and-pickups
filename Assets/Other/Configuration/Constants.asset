@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a3a56a8b1ec400d94a6e80bb7205a48, type: 3}
   m_Name: Constants
   m_EditorClassIdentifier: 
-  playfieldRadius: 25
+  playfieldRadius: 100
+  inGame: 0
+  currentLevel: 0
+  currentLevelScore: 1

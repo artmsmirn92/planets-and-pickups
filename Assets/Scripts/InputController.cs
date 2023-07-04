@@ -28,7 +28,7 @@ public class InputController : MonoBehaviour
         Player.Death              += OnPlayerDeath;
         PressKeyToStart.Start     += OnLevelStart;
         PressKeyToRestart.Restart += OnLevelRestart;
-        LevelsController.CurrentLevel = 1;
+        LevelsController.CurrentLevel = -2;
     }
     
     private void Update()
