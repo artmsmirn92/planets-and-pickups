@@ -1,4 +1,11 @@
-﻿using Lean.Common;
+﻿using System.Collections;
+using System.Linq;
+using Helper;
+using Lean.Common;
+using Lean.Touch;
+using mazing.common.Runtime;
+using mazing.common.Runtime.Ticker;
+using mazing.common.Runtime.Utils;
 using MiniPlanetDefense;
 using UnityEngine;
 using Zenject;
@@ -8,7 +15,11 @@ public class InputController : MonoBehaviour
 {
     #region nonpublic members
 
-    private bool m_ProceedPlayerInput;
+    private bool        m_ProceedPlayerInput;
+    private bool        m_IsOnMobile;
+    private float       m_LastDirXmobile;
+    private IEnumerator m_LastSlowdownCoroutine;
+    private bool        m_LastFingersAny;
 
     #endregion
     
@@ -17,7 +28,7 @@ public class InputController : MonoBehaviour
     [Inject] private Player            Player            { get; }
     [Inject] private PressKeyToStart   PressKeyToStart   { get; }
     [Inject] private PressKeyToRestart PressKeyToRestart { get; }
-    [Inject] private LevelsController  LevelsController  { get; }
+    [Inject] private IViewGameTicker   ViewGameTicker    { get; }
     
     #endregion
     
@@ -25,10 +36,10 @@ public class InputController : MonoBehaviour
 
     private void Awake()
     {
+        m_IsOnMobile = MainUtils.IsOnMobile();
         Player.Death              += OnPlayerDeath;
         PressKeyToStart.Start     += OnLevelStart;
         PressKeyToRestart.Restart += OnLevelRestart;
-        LevelsController.CurrentLevel = -2;
     }
     
     private void Update()
@@ -52,7 +63,6 @@ public class InputController : MonoBehaviour
     {
         m_ProceedPlayerInput = true;
     }
-
     
     private void OnPlayerDeath()
     {
@@ -61,16 +71,67 @@ public class InputController : MonoBehaviour
     
     private void ProceedJump()
     {
-        if (LeanInput.GetDown(KeyCode.Space))
+        if (!m_IsOnMobile && LeanInput.GetDown(KeyCode.Space))
             Player.InvokeJump();
     }
 
     private void ProceedMovement()
     {
-        float dirX = Input.GetAxis("Horizontal");
-        float dirY = Input.GetAxis("Vertical");
-        var dir = new Vector2(dirX, dirY);
+        if (m_IsOnMobile)
+        {
+            ProceedMovementOnMobile();
+        }
+        else
+        {
+            float dirX = Input.GetAxis("Horizontal");
+            float dirY = Input.GetAxis("Vertical");
+            var dir    = new Vector2(dirX, dirY);
+            Player.SetMoveDir(dir);
+        }
+    }
+
+    private void ProceedMovementOnMobile()
+    {
+        var fingers = LeanTouch.GetFingers(true, true);
+        if (!fingers.Any())
+        {
+            if (m_LastFingersAny)
+            {
+                RestartSlowdownCoroutine();
+                m_LastFingersAny = false;
+            }
+            return;
+        }
+        Cor.Stop(m_LastSlowdownCoroutine);
+        bool isLeft = fingers[0].ScreenPosition.x / GraphicUtils.ScreenSize.x < 0.5f;
+        float dirX = isLeft ? -1f : 1f;
+        float dirY = 0f;
+        var dir    = new Vector2(dirX, dirY);
         Player.SetMoveDir(dir);
+        m_LastDirXmobile = dirX;
+        m_LastFingersAny = true;
+    }
+
+    private void RestartSlowdownCoroutine()
+    {
+        Cor.Stop(m_LastSlowdownCoroutine);
+        m_LastSlowdownCoroutine = Slowdown();
+        Cor.Run(m_LastSlowdownCoroutine);
+    }
+
+    private IEnumerator Slowdown()
+    {
+        yield return Cor.Lerp(
+            ViewGameTicker,
+            1f,
+            m_LastDirXmobile,
+            0f, _P =>
+            {
+                float dirX = _P;
+                float dirY = 0f;
+                var dir = new Vector2(dirX, dirY);
+                Player.SetMoveDir(dir);
+            });
     }
 
     #endregion

@@ -1,3 +1,4 @@
+using mazing.common.Runtime;
 using UnityEngine;
 
 namespace MiniPlanetDefense
@@ -14,5 +15,11 @@ namespace MiniPlanetDefense
         public bool  inGame;
         public int   currentLevel;
         public int   currentLevelScore;
+
+        static Constants()
+        {
+            Dbg.Log(Application.dataPath);
+        }
+        
     }
 }

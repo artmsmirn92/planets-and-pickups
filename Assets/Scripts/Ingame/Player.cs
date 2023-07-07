@@ -1,7 +1,6 @@
 using mazing.common.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
-using YG;
 using Zenject;
 
 namespace MiniPlanetDefense
@@ -83,9 +82,7 @@ namespace MiniPlanetDefense
         private void Awake()
         {
             m_Rigidbody = GetComponent<Rigidbody2D>();
-
-            m_Radius = transform.localScale.x / 2f;
-
+            m_Radius    = transform.localScale.x / 2f;
             m_IsColoredOnPlanet = false;
             RefreshColor();
         }
@@ -169,9 +166,7 @@ namespace MiniPlanetDefense
             float distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
             float maxDistanceFromCenter = Constants.playfieldRadius - m_Radius;
             if (distanceFromCenterSqr > maxDistanceFromCenter * maxDistanceFromCenter)
-            {
-                m_Rigidbody.position *= maxDistanceFromCenter / Mathf.Sqrt(distanceFromCenterSqr);
-            }
+                m_Rigidbody.AddForce(m_Rigidbody.position * -1f * 2f);
         }
 
         private void MoveAroundPlanet(Planet _Planet)
@@ -185,7 +180,6 @@ namespace MiniPlanetDefense
                 var rotatedDirection = Quaternion.Euler(0, 0, moveDelta) * deltaFromPlanetCenter;
                 m_Rigidbody.position = _Planet.transform.position + rotatedDirection;
             }
-
             m_HasMovedHorizontallyLastFrame = m_DoMoveAroundPlanet;
         }
 
@@ -218,11 +212,9 @@ namespace MiniPlanetDefense
             {
                 var pickup = _Other.gameObject.GetComponent<Pickup>();
                 pickup.Collect();
-
                 SoundManager.PlaySound(Sound.Pickup);
-                
                 m_Score++;
-                ScoreController.SetScore(-1, m_Score);
+                ScoreController.SetScore(m_Score);
             }
             else if (otherGameObject.CompareTag(Tag.Enemy))
             {
@@ -237,12 +229,9 @@ namespace MiniPlanetDefense
             Death?.Invoke();
             deathParticleSystem.transform.parent = null;
             deathParticleSystem.Play();
-            
             gameObject.SetActive(false);
             m_Destroyed = true;
-
             InGameUI.ShowRestartScreen();
-            
             SoundManager.PlaySound(Sound.Death);
         }
 

@@ -1,6 +1,9 @@
 using System.Collections;
+using Helper;
+using mazing.common.Runtime.Extensions;
 using UnityEngine;
 using UnityEngine.UI;
+using Zenject;
 
 namespace MiniPlanetDefense
 {
@@ -9,38 +12,71 @@ namespace MiniPlanetDefense
     /// </summary>
     public class IngameUI : MonoBehaviour
     {
-        [SerializeField] Text textScore;
-        [SerializeField] GameObject introScreen;
-        [SerializeField] GameObject restartScreen;
-        [SerializeField] float restartScreenDelay = 1f;
-        
-        int score;
+        #region serialized fields
 
-        void Awake()
+        [SerializeField] private GameObject obj;
+        [SerializeField] private Text       textScoreWord;
+        [SerializeField] private Text       textScore;
+        [SerializeField] private Button     jumpButton;
+        [SerializeField] private float      restartScreenDelay = 1f;
+
+        #endregion
+
+        #region inject
+
+        [Inject] private RestartScreenUi RestartScreenUi { get; }
+
+        #endregion
+
+        #region nonpublic members
+
+        private int m_Score;
+
+        #endregion
+
+        #region engine methods
+
+        private void Awake()
         {
-            introScreen.SetActive(true);
-            restartScreen.SetActive(false);
+            EnableUi(false);
+            RestartScreenUi.EnableUi(false);
+        }
+        
+        #endregion
+
+        #region api
+
+        public void EnableUi(bool _Enable)
+        {
+            obj.SetActive(_Enable);
+            jumpButton.SetGoActive(MainUtils.IsOnMobile());
         }
 
-        public void SetScore(int value)
+        public void SetScoreText(int _Value)
         {
-            if (score == value)
+            if (m_Score == _Value)
                 return;
-
-            score = value;
-            textScore.text = score.ToString();
+            m_Score        = _Value;
+            textScore.text = m_Score.ToString();
         }
 
         public void ShowRestartScreen()
         {
+            jumpButton.SetGoActive(false);
             StartCoroutine(ShowRestartScreenCoroutine());
         }
 
-        IEnumerator ShowRestartScreenCoroutine()
+        #endregion
+
+        #region nonpublic methods
+
+        private IEnumerator ShowRestartScreenCoroutine()
         {
             yield return new WaitForSeconds(restartScreenDelay);
-            
-            restartScreen.gameObject.SetActive(true);
+            RestartScreenUi.EnableUi(true);
         }
+
+        #endregion
+
     }
 }

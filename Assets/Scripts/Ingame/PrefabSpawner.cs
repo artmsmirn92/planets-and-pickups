@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using Zenject;
 using Random = UnityEngine.Random;
@@ -6,50 +5,78 @@ using Random = UnityEngine.Random;
 namespace MiniPlanetDefense
 {
     /// <summary>
-    /// Spawns a prefab each x seconds using a either Zenject directly or the <see cref="Pool"/>. Used e.g. for pickups and enemies.
+    /// Spawns a prefab each x seconds using a either Zenject directly or the <see cref="MiniPlanetDefense.Pool"/>. Used e.g. for pickups and enemies.
     /// </summary>
     public class PrefabSpawner : MonoBehaviour
     {
-        [SerializeField] GameObject prefab;
-        [SerializeField] float spawnDelay = 5f;
-        [SerializeField] [Range(0, 1)] float startPercent;
-        [SerializeField] bool usePool;
+        #region serialized fields
 
-        [Inject] Constants constants;
-        [Inject] DiContainer diContainer;
-        [Inject] Pool pool;
+        [SerializeField] private GameObject prefab;
+        [SerializeField] private float      spawnDelay = 5f;
+        [SerializeField] private bool       usePool;
 
-        float spawnCountdown;
+        [SerializeField] [Range(0, 1)] private float startPercent;
 
-        void Awake()
+        #endregion
+
+        #region nonpublic members
+
+        private float m_SpawnCountdown;
+
+        #endregion
+
+        #region inject
+
+        [Inject] private Constants   Constants   { get; }
+        [Inject] private DiContainer DiContainer { get; }
+        [Inject] private Pool        Pool        { get; }
+        [Inject] private Player      Player      { get; }
+
+        #endregion
+
+        #region engine methods
+
+        private void Awake()
         {
-            spawnCountdown = startPercent * spawnDelay;
+            m_SpawnCountdown = startPercent * spawnDelay;
         }
         
-        void Update()
+        private void Update()
         {
-            spawnCountdown -= Time.deltaTime;
-            if (spawnCountdown <= 0)
-            {
-                spawnCountdown += spawnDelay;
-                Spawn();
-            }
+            m_SpawnCountdown -= Time.deltaTime;
+            if (m_SpawnCountdown > 0f)
+                return;
+            m_SpawnCountdown += spawnDelay;
+            Spawn();
         }
 
-        void Spawn()
+        #endregion
+
+
+        #region nonpublic methods
+
+        private void Spawn()
         {
-            var distanceFromCenter = constants.playfieldRadius;
-            var angleRad = Random.value * Mathf.PI * 2;
-            var position = new Vector3(Mathf.Cos(angleRad) * distanceFromCenter, Mathf.Sin(angleRad) * distanceFromCenter, 0);
+            float distFromPlayer = Camera.main.orthographicSize * 2f;
+            float angleRad = Random.value * Mathf.PI * 2;
+            var position = new Vector3(
+                Mathf.Cos(angleRad) * distFromPlayer,
+                Mathf.Sin(angleRad) * distFromPlayer);
+            position += Player.transform.position;
 
             if (usePool)
             {
-                pool.Get(prefab, position, Quaternion.identity, transform);
+                Pool.Get(prefab, position, Quaternion.identity, transform);
             }
             else
             {
-                diContainer.InstantiatePrefab(prefab, position, Quaternion.identity, transform);
+                DiContainer.InstantiatePrefab(prefab, position, Quaternion.identity, transform);
             }
         }
+
+        #endregion
+
+
+
     }
 }

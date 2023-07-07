@@ -1,5 +1,7 @@
-﻿using MiniPlanetDefense;
+﻿using mazing.common.Runtime.Utils;
+using MiniPlanetDefense;
 using UnityEngine;
+using YG;
 using Zenject;
 
 public class ScoreController : MonoBehaviour
@@ -8,21 +10,47 @@ public class ScoreController : MonoBehaviour
 
     [Inject] private SavesController SavesController { get; }
     [Inject] private IngameUI        IngameUI        { get; }
+    [Inject] private StartScreenUi   StartScreenUi   { get; }
     [Inject] private Constants       Constants       { get; }
+
+    #endregion
+
+    #region engine mehtods
+
+    private void Start()
+    {
+        Cor.Run(Cor.WaitWhile(() => !YandexGame.SDKEnabled,
+            () =>
+            {
+                int maxScore = SavesController.GetMaxScore();
+                StartScreenUi.SetMaxScore(maxScore);
+            }));
+    }
 
     #endregion
 
     #region api
 
-    public void SetScore(int _Level, int _Score)
+    public void SetScore(int _Score)
     {
-        if (_Level == -1)
-            SavesController.SetInfiniteLevelScore(_Score);
-        else
-            SavesController.SetLevelScore(_Level, _Score);
         Constants.currentLevelScore = _Score;
+        SaveScore(_Score);
+        SetScoreInUi(_Score);
+    }
+
+    #endregion
+
+    #region nonpublic methods
+
+    private void SaveScore(int _Score)
+    {
+        SavesController.SetLevelScore(_Score);
+    }
+
+    private void SetScoreInUi(int _Score)
+    {
         if (Constants.inGame)
-            IngameUI.SetScore(_Score);
+            IngameUI.SetScoreText(_Score);
     }
 
     #endregion

@@ -1,3 +1,5 @@
+using mazing.common.Runtime.Extensions;
+using mazing.common.Runtime.Utils;
 using UnityEngine;
 using Zenject;
 
@@ -10,21 +12,14 @@ namespace MiniPlanetDefense
     {
         #region inject
 
-        private PhysicsHelper PhysicsHelper { get; set; }
-
-        [Inject]
-        private void Inject(PhysicsHelper _PhysicsHelper)
-        {
-            PhysicsHelper = _PhysicsHelper;
-        }
-
+        [Inject] private PhysicsHelper PhysicsHelper { get; }
+        
         #endregion
 
         #region api
 
         public float   Radius   { get; private set; }
         public Vector2 Position { get; private set; }
-        public Vector2 Speed    { get; private set; }
 
         #endregion
 
@@ -33,7 +28,7 @@ namespace MiniPlanetDefense
         private void Awake()
         {
             var tr = transform;
-            (Radius, Position) = (tr.localScale.x * .5f, tr.position);
+            (Radius, Position) = (tr.lossyScale.x * .5f, tr.position);
         }
 
         private void Update()
@@ -43,7 +38,10 @@ namespace MiniPlanetDefense
 
         private void OnEnable()
         {
-            PhysicsHelper.RegisterPlanet(this);
+            StartCoroutine(Cor.WaitWhile(PhysicsHelper.IsNull, () =>
+            {
+                PhysicsHelper.RegisterPlanet(this);
+            }));
         }
 
         private void OnDisable()
