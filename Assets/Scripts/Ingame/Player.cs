@@ -54,7 +54,7 @@ namespace MiniPlanetDefense
         #region inject
 
         [Inject] private PhysicsHelper   PhysicsHelper   { get; }
-        [Inject] private Constants       Constants       { get; }
+        [Inject] private MainData       MainData       { get; }
         [Inject] private IngameUI        InGameUI        { get; }
         [Inject] private SoundManager    SoundManager    { get; }
         [Inject] private ScoreController ScoreController { get; }
@@ -149,9 +149,10 @@ namespace MiniPlanetDefense
 
         private void Jump()
         {
-            Dbg.Log("jump!!!");
-            var jumpForceDirection = -CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized;
-            m_Rigidbody.velocity = jumpForceDirection * jumpImpulse;
+            var jumpForceDirection = CalculateDeltaToPlanetCenter(m_CurrentPlanet).normalized * -1f; 
+            var forceVector = jumpForceDirection * jumpImpulse * 50f;
+            m_Rigidbody.AddForce(forceVector);
+            // m_Rigidbody.velocity = forceVector;
             m_CurrentPlanet = null;
             SoundManager.PlaySound(Sound.Jump);
         }
@@ -164,7 +165,7 @@ namespace MiniPlanetDefense
         private void RestrictPlayerPosition()
         {
             float distanceFromCenterSqr = m_Rigidbody.position.sqrMagnitude;
-            float maxDistanceFromCenter = Constants.playfieldRadius - m_Radius;
+            float maxDistanceFromCenter = MainData.playfieldRadius - m_Radius;
             if (distanceFromCenterSqr > maxDistanceFromCenter * maxDistanceFromCenter)
                 m_Rigidbody.AddForce(m_Rigidbody.position * -1f * 2f);
         }

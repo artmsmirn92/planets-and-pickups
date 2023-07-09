@@ -27,7 +27,7 @@ namespace MiniPlanetDefense
 
         #region inject
 
-        [Inject] private Constants   Constants   { get; }
+        [Inject] private MainData   MainData   { get; }
         [Inject] private DiContainer DiContainer { get; }
         [Inject] private Pool        Pool        { get; }
         [Inject] private Player      Player      { get; }

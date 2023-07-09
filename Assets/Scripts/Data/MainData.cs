@@ -9,17 +9,10 @@ namespace MiniPlanetDefense
     /// b) should be configurable in the editor, but don't change at runtime.
     /// </summary>
     [CreateAssetMenu]
-    public class Constants : ScriptableObject
+    public class MainData : ScriptableObject
     {
         public float playfieldRadius;
         public bool  inGame;
-        public int   currentLevel;
         public int   currentLevelScore;
-
-        static Constants()
-        {
-            Dbg.Log(Application.dataPath);
-        }
-        
     }
 }

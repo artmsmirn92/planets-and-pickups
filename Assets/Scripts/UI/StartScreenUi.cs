@@ -1,4 +1,5 @@
 ﻿using Helper;
+using mazing.common.Runtime.Utils;
 using TMPro;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace MiniPlanetDefense
         {
             maxScore.text = "Рекорд: ...";
             EnableUi(true);
-            string sub = MainUtils.IsOnMobile() ? "экран" : "[Пробел]";
+            string sub = CommonUtils.IsOnMobileWebGl() ? "экран" : "[Пробел]";
             tapToStart.text = $"Нажмите {sub} для старта";
         }
 

@@ -1,8 +1,6 @@
 using System.Linq;
-using Helper;
 using Lean.Common;
 using Lean.Touch;
-using mazing.common.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,33 +9,15 @@ namespace MiniPlanetDefense
     /// <summary>
     /// A script that when enabled stops time, waits for a key to be pressed and then hides itself and restores the flow of time.
     /// </summary>
-    public class PressKeyToStart : MonoBehaviour
+    public class PressKeyToStart : PressKeyToBase
     {
-        #region serialized fields
-
-        [SerializeField] private KeyCode key = KeyCode.Space;
-
-        #endregion
-
-        #region nonpublic members
-
-        private bool m_IsOnMobile;
-
-        #endregion
-        
         #region api
         
         public event UnityAction Start;
         
         #endregion
-
-
+        
         #region engine methods
-
-        private void Awake()
-        {
-            m_IsOnMobile = MainUtils.IsOnMobile();
-        }
 
         private void OnEnable() => Time.timeScale = 0f;
 
@@ -45,7 +25,7 @@ namespace MiniPlanetDefense
 
         private void Update()
         {
-            if (!MustInvokeStartEvent()) 
+            if (!MustInvokeEvent()) 
                 return;
             gameObject.SetActive(false);
             Start?.Invoke();
@@ -55,18 +35,13 @@ namespace MiniPlanetDefense
 
         #region nonpublic methods
 
-        private bool MustInvokeStartEvent()
+        private bool MustInvokeEvent()
         {
-            switch (m_IsOnMobile)
+            return IsOnMobile switch
             {
-                case true:
-                    bool isAnyTouch = LeanTouch.GetFingers(false, false).Any();
-                    return isAnyTouch;
-                case false when LeanInput.GetDown(key):
-                    return true;
-                default:
-                    return false;
-            }
+                true  => LeanTouch.GetFingers(false, false).Any(),
+                false => LeanInput.GetDown(key)
+            };
         }
 
         #endregion

@@ -1,4 +1,5 @@
 ﻿using Helper;
+using mazing.common.Runtime.Utils;
 using TMPro;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace MiniPlanetDefense
         private void Awake()
         {
             EnableUi(false);
-            string sub = MainUtils.IsOnMobile() ? "экран" : "[Пробел]";
+            string sub = CommonUtils.IsOnMobileWebGl() ? "экран" : "[Пробел]";
             tapToRestart.text = $"Нажмите {sub} для рестарта";
         }
 

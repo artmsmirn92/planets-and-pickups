@@ -16,7 +16,7 @@ namespace MiniPlanetDefense
         [SerializeField] float playerAttractionMaxDistance;
 
         [Inject] PhysicsHelper physicsHelper;
-        [Inject] Constants constants;
+        [Inject] MainData m_MainData;
         [Inject] Player player;
 
         new Rigidbody2D rigidbody;
@@ -65,7 +65,7 @@ namespace MiniPlanetDefense
 
             var distanceToCenter = transform.position.magnitude;
             var directionToCenter = -(transform.position / distanceToCenter);
-            var closenessToCenterPercent = Mathf.Clamp01(distanceToCenter / constants.playfieldRadius);
+            var closenessToCenterPercent = Mathf.Clamp01(distanceToCenter / m_MainData.playfieldRadius);
             var gravityTowardsCenter = borderAvoidanceCurve.Evaluate(closenessToCenterPercent) * borderAvoidanceMultiplier;
             evasionGravity += gravityTowardsCenter * directionToCenter;
 

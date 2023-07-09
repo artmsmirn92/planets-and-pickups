@@ -1,6 +1,7 @@
 using System.Collections;
 using Helper;
 using mazing.common.Runtime.Extensions;
+using mazing.common.Runtime.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -18,6 +19,7 @@ namespace MiniPlanetDefense
         [SerializeField] private Text       textScoreWord;
         [SerializeField] private Text       textScore;
         [SerializeField] private Button     jumpButton;
+        [SerializeField] private Button     pauseButton;
         [SerializeField] private float      restartScreenDelay = 1f;
 
         #endregion
@@ -49,7 +51,8 @@ namespace MiniPlanetDefense
         public void EnableUi(bool _Enable)
         {
             obj.SetActive(_Enable);
-            jumpButton.SetGoActive(MainUtils.IsOnMobile());
+            jumpButton.SetGoActive(CommonUtils.IsOnMobileWebGl());
+            pauseButton.SetGoActive(CommonUtils.IsOnMobileWebGl());
         }
 
         public void SetScoreText(int _Value)
@@ -62,8 +65,17 @@ namespace MiniPlanetDefense
 
         public void ShowRestartScreen()
         {
-            jumpButton.SetGoActive(false);
+            jumpButton .SetGoActive(false);
+            pauseButton.SetGoActive(false);
             StartCoroutine(ShowRestartScreenCoroutine());
+        }
+
+        public void OnPauseGameButtonClick()
+        {
+            bool doPause = Time.timeScale > 0f;
+            float buttonColorA = pauseButton.image.color.a;
+            pauseButton.image.color = (doPause ? Color.green : Color.white).SetA(buttonColorA);
+            Time.timeScale = doPause ? 0f : 1f;
         }
 
         #endregion

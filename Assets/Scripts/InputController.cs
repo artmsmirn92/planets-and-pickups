@@ -18,6 +18,7 @@ public class InputController : MonoBehaviour
     private bool        m_ProceedPlayerInput;
     private bool        m_IsOnMobile;
     private float       m_LastDirXmobile;
+    private float       m_LastDirXaccelerateMobile;
     private IEnumerator m_LastSlowdownCoroutine;
     private bool        m_LastFingersAny;
 
@@ -36,7 +37,7 @@ public class InputController : MonoBehaviour
 
     private void Awake()
     {
-        m_IsOnMobile = MainUtils.IsOnMobile();
+        m_IsOnMobile = CommonUtils.IsOnMobileWebGl();
         Player.Death              += OnPlayerDeath;
         PressKeyToStart.Start     += OnLevelStart;
         PressKeyToRestart.Restart += OnLevelRestart;
@@ -95,20 +96,20 @@ public class InputController : MonoBehaviour
         var fingers = LeanTouch.GetFingers(true, true);
         if (!fingers.Any())
         {
-            if (m_LastFingersAny)
-            {
-                RestartSlowdownCoroutine();
-                m_LastFingersAny = false;
-            }
+            m_LastDirXaccelerateMobile = 0f;
+            if (!m_LastFingersAny)
+                return;
+            RestartSlowdownCoroutine();
+            m_LastFingersAny = false;
             return;
         }
         Cor.Stop(m_LastSlowdownCoroutine);
+        m_LastDirXaccelerateMobile += Time.deltaTime * 2f;
+        m_LastDirXaccelerateMobile = Mathf.Clamp01(m_LastDirXaccelerateMobile);
         bool isLeft = fingers[0].ScreenPosition.x / GraphicUtils.ScreenSize.x < 0.5f;
-        float dirX = isLeft ? -1f : 1f;
-        float dirY = 0f;
-        var dir    = new Vector2(dirX, dirY);
+        var dir = Vector2.right * (isLeft ? -1f : 1f) * m_LastDirXaccelerateMobile;
         Player.SetMoveDir(dir);
-        m_LastDirXmobile = dirX;
+        m_LastDirXmobile = dir.x;
         m_LastFingersAny = true;
     }
 
@@ -119,6 +120,19 @@ public class InputController : MonoBehaviour
         Cor.Run(m_LastSlowdownCoroutine);
     }
 
+    private IEnumerator Accelerate()
+    {
+        yield return Cor.Lerp(
+            ViewGameTicker,
+            1f,
+            0f,
+            1f, _P =>
+            {
+                var dir = Vector2.right * _P;
+                Player.SetMoveDir(dir);
+            });
+    }
+
     private IEnumerator Slowdown()
     {
         yield return Cor.Lerp(
@@ -127,9 +141,7 @@ public class InputController : MonoBehaviour
             m_LastDirXmobile,
             0f, _P =>
             {
-                float dirX = _P;
-                float dirY = 0f;
-                var dir = new Vector2(dirX, dirY);
+                var dir = Vector2.right * _P;
                 Player.SetMoveDir(dir);
             });
     }

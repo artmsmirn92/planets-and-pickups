@@ -11,7 +11,7 @@ public class ScoreController : MonoBehaviour
     [Inject] private SavesController SavesController { get; }
     [Inject] private IngameUI        IngameUI        { get; }
     [Inject] private StartScreenUi   StartScreenUi   { get; }
-    [Inject] private Constants       Constants       { get; }
+    [Inject] private MainData       MainData       { get; }
 
     #endregion
 
@@ -33,7 +33,7 @@ public class ScoreController : MonoBehaviour
 
     public void SetScore(int _Score)
     {
-        Constants.currentLevelScore = _Score;
+        MainData.currentLevelScore = _Score;
         SaveScore(_Score);
         SetScoreInUi(_Score);
     }
@@ -49,7 +49,7 @@ public class ScoreController : MonoBehaviour
 
     private void SetScoreInUi(int _Score)
     {
-        if (Constants.inGame)
+        if (MainData.inGame)
             IngameUI.SetScoreText(_Score);
     }
 

@@ -1,5 +1,6 @@
 ﻿using MiniPlanetDefense;
 using UnityEngine;
+using YG;
 using Zenject;
 
 namespace Helper
@@ -10,7 +11,7 @@ namespace Helper
 
         [Inject] private PressKeyToStart   PressKeyToStart  { get; }
         [Inject] private PressKeyToRestart PressKeyToRetart { get; }
-        [Inject] private Constants         Constants        { get; }
+        [Inject] private MainData         MainData        { get; }
         [Inject] private IngameUI          IngameUI         { get; }
         [Inject] private StartScreenUi     StartScreenUi    { get; }
         [Inject] private Player            Player           { get; }
@@ -30,20 +31,22 @@ namespace Helper
         private void OnPressKeyToStart()
         {
             StartScreenUi.EnableUi(false);
-            Constants.inGame = true;
+            MainData.inGame = true;
             IngameUI.EnableUi(true);
         }
         
         private void OnPressKeyToRestart()
         {
-            Constants.inGame = false;
+            MainData.inGame = false;
             IngameUI.EnableUi(false);
+            StartScreenUi.SetMaxScore(SavesController.GetMaxScore());
         }
         
         private void OnPlayerDeath()
         {
             int score = SavesController.GetMaxScore();
             StartScreenUi.SetMaxScore(score);
+            YandexGame.FullscreenShow();
         }
 
         #endregion
