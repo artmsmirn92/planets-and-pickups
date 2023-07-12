@@ -1,6 +1,7 @@
 using System.Linq;
 using Lean.Common;
 using Lean.Touch;
+using mazing.common.Runtime.Constants;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -25,7 +26,7 @@ namespace MiniPlanetDefense
             if (!MustInvokeEvent()) 
                 return;
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            SceneManager.LoadScene(SceneNames.Level);
             Restart?.Invoke();
         }
 

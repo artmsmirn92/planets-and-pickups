@@ -52,7 +52,7 @@ namespace MiniPlanetDefense
         {
             obj.SetActive(_Enable);
             jumpButton.SetGoActive(CommonUtils.IsOnMobileWebGl());
-            pauseButton.SetGoActive(CommonUtils.IsOnMobileWebGl());
+            pauseButton.SetGoActive(true);
         }
 
         public void SetScoreText(int _Value)
