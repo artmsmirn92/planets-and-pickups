@@ -1,5 +1,7 @@
-﻿using MiniPlanetDefense;
+﻿using mazing.common.Runtime.Constants;
+using MiniPlanetDefense;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using YG;
 using Zenject;
 
@@ -39,6 +41,9 @@ namespace Helper
         {
             MainData.inGame = false;
             IngameUI.EnableUi(false);
+            StartScreenUi.EnableUi(false);
+            Time.timeScale = 0f;
+            SceneManager.LoadScene(SceneNames.Level);
             StartScreenUi.SetMaxScore(SavesController.GetMaxScore());
         }
         

@@ -1,6 +1,3 @@
-using System.Linq;
-using Lean.Common;
-using Lean.Touch;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -33,17 +30,5 @@ namespace MiniPlanetDefense
 
         #endregion
 
-        #region nonpublic methods
-
-        private bool MustInvokeEvent()
-        {
-            return IsOnMobile switch
-            {
-                true  => LeanTouch.GetFingers(false, false).Any(),
-                false => LeanInput.GetDown(key)
-            };
-        }
-
-        #endregion
     }
 }

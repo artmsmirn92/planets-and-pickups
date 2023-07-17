@@ -1,5 +1,4 @@
-﻿using Helper;
-using mazing.common.Runtime.Utils;
+﻿using mazing.common.Runtime.Utils;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,16 +30,13 @@ namespace MiniPlanetDefense
 
         private void Start()
         {
+            maxScore.text = "Рекорд: ...";
+            if (YandexGame.SDKEnabled)
+                SetMaxScoreFromSaves();
+            SavesController.SavesLoaded += SetMaxScoreFromSaves;
             controlsTutorialImage.sprite = CommonUtils.IsOnMobileWebGl()
                 ? controlsTutorialMobileSprite
                 : controlsTutorialDesktopSprite;
-            maxScore.text = "Рекорд: ...";
-            Cor.Run(Cor.WaitWhile(() => !YandexGame.SDKEnabled,
-                () =>
-                {
-                    int ms = SavesController.GetMaxScore();
-                    SetMaxScore(ms);
-                }));
             EnableUi(true);
             string sub = CommonUtils.IsOnMobileWebGl() ? "экран" : "[Пробел]";
             tapToStart.text = $"Нажмите {sub} для старта";
@@ -58,6 +54,16 @@ namespace MiniPlanetDefense
         public void SetMaxScore(int _Score)
         {
             maxScore.text = "Рекорд: " + _Score;
+        }
+
+        #endregion
+
+        #region nonpublic methods
+        
+        private void SetMaxScoreFromSaves()
+        {
+            int ms = SavesController.GetMaxScore();
+            SetMaxScore(ms);
         }
 
         #endregion

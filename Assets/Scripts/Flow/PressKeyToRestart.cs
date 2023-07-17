@@ -1,10 +1,4 @@
-using System.Linq;
-using Lean.Common;
-using Lean.Touch;
-using mazing.common.Runtime.Constants;
-using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 
 namespace MiniPlanetDefense
 {
@@ -25,22 +19,7 @@ namespace MiniPlanetDefense
         {
             if (!MustInvokeEvent()) 
                 return;
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneNames.Level);
             Restart?.Invoke();
-        }
-
-        #endregion
-        
-        #region nonpublic methods
-
-        private bool MustInvokeEvent()
-        {
-            return IsOnMobile switch
-            {
-                true  => LeanTouch.GetFingers(false, false).Any(),
-                false => LeanInput.GetDown(key)
-            };
         }
 
         #endregion
