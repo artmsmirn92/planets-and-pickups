@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.CompilerServices;
+using AudioYB;
 using UnityEngine;
 
 namespace MiniPlanetDefense
@@ -10,41 +12,74 @@ namespace MiniPlanetDefense
     /// </summary>
     public class SoundManager : MonoBehaviour
     {
-        [SerializeField] AudioSource death;
-        [SerializeField] AudioSource pickup;
-        [SerializeField] AudioSource jump;
-        [SerializeField] AudioSource touchPlanet;
-        [SerializeField] AudioSource enemySpawned;
+        #region serialized fields
 
-        public void PlaySound(Sound sound)
+        [SerializeField] private AudioYb death;
+        [SerializeField] private AudioYb pickup;
+        [SerializeField] private AudioYb jump;
+        [SerializeField] private AudioYb touchPlanet;
+        [SerializeField] private AudioYb enemySpawned;
+        [SerializeField] private AudioYb mainTheme;
+
+        #endregion
+
+        #region api
+
+        public void PlaySound(Sound _Sound)
         {
-            var audioSource = GetAudioSource(sound);
+            string audioClipName = GetAudioClipName(_Sound);
+            var audioSource = GetAudioSource(_Sound);
             if (audioSource != null)
-                audioSource.Play();
+                audioSource.Play(audioClipName);
         }
 
-        AudioSource GetAudioSource(Sound sound)
+        public void MuteSound(bool _Mute)
         {
-            switch (sound)
-            {
-                case Sound.Death:
-                    return death;
-                
-                case Sound.Pickup:
-                    return pickup;
-                
-                case Sound.Jump:
-                    return jump;
-                
-                case Sound.TouchPlanet:
-                    return touchPlanet;
-                
-                case Sound.EnemySpawned:
-                    return enemySpawned;
-                
-                default:
-                    throw new NotImplementedException(sound.ToString());
-            }
+            mainTheme.Volume = _Mute ? 0f : 1f;
         }
+
+        public void EnableSound(bool _IsOn)
+        {
+            death.Enabled        = _IsOn;
+            pickup.Enabled       = _IsOn;
+            jump.Enabled         = _IsOn;
+            touchPlanet.Enabled  = _IsOn;
+            enemySpawned.Enabled = _IsOn;
+            mainTheme.Enabled    = _IsOn;
+        }
+
+        #endregion
+
+        #region nonpublic methods
+
+        private static string GetAudioClipName(Sound _Sound)
+        {
+            return _Sound switch
+            {
+                Sound.Death        => "death",
+                Sound.Pickup       => "pickup",
+                Sound.Jump         => "jump",
+                Sound.TouchPlanet  => "touch_planet",
+                Sound.EnemySpawned => "enemy_spawn",
+                Sound.MainTheme    => "main_theme",
+                _                  => throw new SwitchExpressionException(_Sound)
+            };
+        }
+
+        private AudioYb GetAudioSource(Sound _Sound)
+        {
+            return _Sound switch
+            {
+                Sound.Death        => death,
+                Sound.Pickup       => pickup,
+                Sound.Jump         => jump,
+                Sound.TouchPlanet  => touchPlanet,
+                Sound.EnemySpawned => enemySpawned,
+                Sound.MainTheme    => mainTheme,
+                _                  => throw new NotImplementedException(_Sound.ToString())
+            };
+        }
+
+        #endregion
     }
 }

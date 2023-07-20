@@ -17,7 +17,7 @@ public class SavesController : MonoBehaviour
 
     #region api
     
-    public bool ScoresEnabled { get; private set; }
+    public bool SavesEnabled { get; private set; }
 
     public event UnityAction SavesLoaded;
 
@@ -35,6 +35,16 @@ public class SavesController : MonoBehaviour
         YandexGame.NewLeaderboardScores("score", _Score);
     }
 
+    public bool SoundOn
+    {
+        get => YandexGame.savesData.soundOn;
+        set
+        {
+            YandexGame.savesData.soundOn = value;
+            YandexGame.SaveProgress();
+        }
+    }
+
     #endregion
 
     #region nonpublic methods
@@ -42,7 +52,7 @@ public class SavesController : MonoBehaviour
     private void RaiseSavesLoadedEvent()
     {
         Dbg.Log("YANDEX GAMES PLUGIN LOADED !!!");
-        ScoresEnabled = true;
+        SavesEnabled = true;
         SavesLoaded?.Invoke();
     }
     

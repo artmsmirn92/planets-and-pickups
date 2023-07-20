@@ -27,6 +27,7 @@ namespace MiniPlanetDefense
         #region inject
 
         [Inject] private RestartScreenUi RestartScreenUi { get; }
+        [Inject] private SoundManager    SoundManager    { get; }
 
         #endregion
 
@@ -73,6 +74,7 @@ namespace MiniPlanetDefense
         public void OnPauseGameButtonClick()
         {
             bool doPause = Time.timeScale > 0f;
+            SoundManager.MuteSound(doPause);
             float buttonColorA = pauseButton.image.color.a;
             pauseButton.image.color = (doPause ? Color.green : Color.white).SetA(buttonColorA);
             Time.timeScale = doPause ? 0f : 1f;

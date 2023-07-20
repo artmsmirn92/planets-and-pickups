@@ -9,6 +9,7 @@ namespace MiniPlanetDefense
         Pickup,
         Jump,
         TouchPlanet,
-        EnemySpawned
+        EnemySpawned,
+        MainTheme
     }
 }

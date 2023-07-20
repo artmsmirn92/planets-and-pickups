@@ -15,13 +15,16 @@ namespace MiniPlanetDefense
         [SerializeField] private TextMeshProUGUI maxScore;
         [SerializeField] private TextMeshProUGUI tapToStart;
         [SerializeField] private Image           controlsTutorialImage;
+        [SerializeField] private Button          enableSoundButton;
 
         [SerializeField] private Sprite controlsTutorialDesktopSprite, controlsTutorialMobileSprite;
+        [SerializeField] private Sprite soundOnSprite,                 soundOffSprite;
 
         #endregion
 
         #region inject
 
+        [Inject] private SoundManager    SoundManager    { get; }
         [Inject] private SavesController SavesController { get; }
 
         #endregion
@@ -30,6 +33,8 @@ namespace MiniPlanetDefense
 
         private void Start()
         {
+            enableSoundButton.image.sprite = SavesController.SoundOn ? soundOnSprite : soundOffSprite;
+            SoundManager.PlaySound(Sound.MainTheme);
             maxScore.text = "Рекорд: ...";
             if (YandexGame.SDKEnabled)
                 SetMaxScoreFromSaves();
@@ -54,6 +59,13 @@ namespace MiniPlanetDefense
         public void SetMaxScore(int _Score)
         {
             maxScore.text = "Рекорд: " + _Score;
+        }
+
+        public void OnSoundOnOffButtonClick()
+        {
+            SavesController.SoundOn = !SavesController.SoundOn;
+            SoundManager.EnableSound(SavesController.SoundOn);
+            enableSoundButton.image.sprite = SavesController.SoundOn ? soundOnSprite : soundOffSprite;
         }
 
         #endregion
