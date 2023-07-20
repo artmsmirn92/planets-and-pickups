@@ -54,7 +54,7 @@ namespace MiniPlanetDefense
         #region inject
 
         [Inject] private PhysicsHelper   PhysicsHelper   { get; }
-        [Inject] private MainData       MainData       { get; }
+        [Inject] private MainData        MainData       { get; }
         [Inject] private IngameUI        InGameUI        { get; }
         [Inject] private SoundManager    SoundManager    { get; }
         [Inject] private ScoreController ScoreController { get; }
@@ -67,7 +67,8 @@ namespace MiniPlanetDefense
         
         public void InvokeJump()
         {
-            m_MustJump = true;
+            if (m_CurrentPlanet != null)
+                m_MustJump = true;
         }
 
         public void SetMoveDir(Vector2 _Value)
@@ -89,9 +90,7 @@ namespace MiniPlanetDefense
 
         private void FixedUpdate()
         {
-            m_CurrentPlanet = PhysicsHelper.GetCurrentPlanet(
-                m_Rigidbody.position, 
-                m_Radius + onPlanetRadius);
+            m_CurrentPlanet = GetCurrentPlanet();
             if (m_CurrentPlanet == null)
             {
                 m_Rigidbody.AddForce(PhysicsHelper.GetGravityAtPosition(transform.position, m_Radius));
@@ -117,18 +116,16 @@ namespace MiniPlanetDefense
             m_PreviousPlanet = m_CurrentPlanet;
         }
 
-        // private void Update()
-        // {
-        //     if (m_CurrentPlanet == null)
-        //         ProceedPlayerInSpaceState();
-        //     else
-        //         ProceedPlayerOnPlanetState();
-        //     SetColoredOnPlanet(m_CurrentPlanet != null);
-        // }
-
         #endregion
 
         #region nonpublic methods
+
+        private Planet GetCurrentPlanet()
+        {
+            return PhysicsHelper.GetCurrentPlanet(
+                m_Rigidbody.position, 
+                m_Radius + onPlanetRadius);
+        }
 
         private void ProceedPlayerInSpaceState()
         {
